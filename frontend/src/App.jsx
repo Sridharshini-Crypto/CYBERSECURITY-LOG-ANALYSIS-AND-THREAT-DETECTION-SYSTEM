@@ -47,11 +47,35 @@ function App() {
   }
 
   useEffect(() => {
-    refreshReports().catch(() => {
+    let retryTimer
+    let active = true
+    async function connect() {
+      try {
+        await refreshReports()
+        if (active) setError('')
+      } catch {
+        if (!active) return
+        setConnected(false)
+        setError('Backend unavailable. Start the Spring Boot service on port 8080.')
+        retryTimer = window.setTimeout(connect, 5000)
+      }
+    }
+    connect()
+    return () => {
+      active = false
+      window.clearTimeout(retryTimer)
+    }
+  }, [])
+
+  async function retryConnection() {
+    try {
+      await refreshReports()
+      setError('')
+    } catch {
       setConnected(false)
       setError('Backend unavailable. Start the Spring Boot service on port 8080.')
-    })
-  }, [])
+    }
+  }
 
   async function selectReport(id) {
     if (!id) return
@@ -151,7 +175,7 @@ function App() {
             </div>
           </div>
 
-          {error && <div className="alert-banner" role="alert"><AlertTriangle size={17} /><span>{error}</span><button className="icon-button" aria-label="Dismiss" onClick={() => setError('')}><X size={16} /></button></div>}
+          {error && <div className="alert-banner" role="alert"><AlertTriangle size={17} /><span>{error}</span><button className="retry-button" onClick={retryConnection}>Retry</button><button className="icon-button" aria-label="Dismiss" onClick={() => setError('')}><X size={16} /></button></div>}
 
           {page === 'dashboard' && <Dashboard analysis={analysis} reports={reports} loading={loading} onAnalyze={() => setPage('analysis')} onSelectReport={selectReport} onDownload={downloadReport} />}
           {page === 'analysis' && <AnalysisView analysis={analysis} uploading={uploading} loading={loading} inputRef={fileInput} selectedFileName={selectedFileName} onFileSelect={(name) => setSelectedFileName(name)} onUpload={uploadFile} onDownload={downloadReport} />}

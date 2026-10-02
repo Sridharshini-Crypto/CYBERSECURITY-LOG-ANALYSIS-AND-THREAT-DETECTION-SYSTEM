@@ -72,6 +72,8 @@ h1 { font-size: 25px; margin: 0; letter-spacing: 0; line-height: 1.25; font-weig
 .secondary-button:hover:not(:disabled) { border-color: #a9b9ae; background: #f8faf8; }
 .alert-banner { display: flex; align-items: center; gap: 10px; margin: -7px 0 17px; border: 1px solid #ecd3bd; border-radius: 4px; padding: 10px 12px; background: #fff8f0; color: #85542b; font-size: 11px; }
 .alert-banner .icon-button { margin-left: auto; }
+.retry-button { border: 1px solid #e5c8aa; border-radius: 3px; padding: 5px 9px; color: #85542b; background: #fffdf9; font-size: 10px; font-weight: 700; }
+.retry-button:hover { background: #fff; border-color: #d7ac80; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 13px; }
 .stat-card { min-height: 119px; border: 1px solid #e4e9e4; border-radius: 5px; background: #fff; padding: 15px 17px 13px; animation: rise-in .45s both; }
 .stat-top { display: flex; justify-content: space-between; align-items: center; color: #849087; font-size: 9px; }
