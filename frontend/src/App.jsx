@@ -154,7 +154,6 @@ function App() {
           <button className="icon-button menu-toggle" aria-label="Open navigation" onClick={() => setMenuOpen(!menuOpen)}><Menu size={19} /></button>
           <div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{title}</strong></div>
           <div className="topbar-right">
-            <span className="system-chip"><span className="status-dot online" />SYSTEM READY</span>
             <button className="icon-button help-button" aria-label="About CyberGuard"><CircleHelp size={18} /></button>
             <div className="avatar">CG</div>
           </div>
