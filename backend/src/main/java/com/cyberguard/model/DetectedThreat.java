@@ -1,5 +1,6 @@
 package com.cyberguard.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -8,17 +9,32 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 
+/**
+ * Entity representing an individual detected security event.
+ * Demonstrates OOP Encapsulation with private state and accessors.
+ */
 @Entity
 public class DetectedThreat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private int lineNumber;
+
     @Lob
+    @Column(length = 2048)
     private String logLine;
+
     private String threatType;
     private String severity;
+
+    @Lob
+    @Column(length = 2048)
     private String description;
+
+    @Lob
+    @Column(length = 2048)
+    private String recommendedAction;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private AnalysisReport report;
@@ -27,17 +43,52 @@ public class DetectedThreat {
     }
 
     public DetectedThreat(int lineNumber, String logLine, String threatType, String severity, String description) {
+        this(lineNumber, logLine, threatType, severity, description, null);
+    }
+
+    public DetectedThreat(int lineNumber, String logLine, String threatType, String severity,
+                          String description, String recommendedAction) {
         this.lineNumber = lineNumber;
         this.logLine = logLine;
         this.threatType = threatType;
         this.severity = severity;
         this.description = description;
+        this.recommendedAction = recommendedAction;
     }
 
-    void setReport(AnalysisReport report) { this.report = report; }
-    public int getLineNumber() { return lineNumber; }
-    public String getLogLine() { return logLine; }
-    public String getThreatType() { return threatType; }
-    public String getSeverity() { return severity; }
-    public String getDescription() { return description; }
+    void setReport(AnalysisReport report) {
+        this.report = report;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    public String getLogLine() {
+        return logLine;
+    }
+
+    public String getThreatType() {
+        return threatType;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getRecommendedAction() {
+        return recommendedAction;
+    }
+
+    public AnalysisReport getReport() {
+        return report;
+    }
 }

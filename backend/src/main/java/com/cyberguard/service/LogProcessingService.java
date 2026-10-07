@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Service orchestrating log file parsing, threat detection, and report persistence.
+ */
 @Service
 public class LogProcessingService {
     private final ThreatDetectionService threatDetectionService;
@@ -38,18 +41,29 @@ public class LogProcessingService {
             throw new IllegalArgumentException("Upload a non-empty .log or .txt file.");
         }
         String fileName = file.getOriginalFilename() == null ? "upload.log" : file.getOriginalFilename();
-        String lowerName = fileName.toLowerCase(java.util.Locale.ROOT);
-        if (!lowerName.endsWith(".log") && !lowerName.endsWith(".txt")) {
-            throw new IllegalArgumentException("Only .log and .txt files are supported.");
-        }
-
-        long startedAt = System.nanoTime();
         final String content;
         try {
             content = new String(file.getBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
             throw new IllegalStateException("The uploaded log file could not be read.", exception);
         }
+        return processContent(fileName, content);
+    }
+
+    @Transactional
+    public AnalysisResponse processContent(String fileName, String content) {
+        if (fileName == null || fileName.isBlank()) {
+            fileName = "upload.log";
+        }
+        String lowerName = fileName.toLowerCase(java.util.Locale.ROOT);
+        if (!lowerName.endsWith(".log") && !lowerName.endsWith(".txt")) {
+            throw new IllegalArgumentException("Only .log and .txt files are supported.");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("The log file contains no records.");
+        }
+
+        long startedAt = System.nanoTime();
         List<String> lines = new ArrayList<>(Arrays.asList(content.split("\\R", -1)));
         if (!lines.isEmpty() && lines.get(lines.size() - 1).isEmpty() && content.endsWith("\n")) {
             lines.remove(lines.size() - 1);
@@ -70,8 +84,13 @@ public class LogProcessingService {
             uniqueLines.add(line);
         }
         for (ThreatResult finding : findings) {
-            report.addThreat(new DetectedThreat(finding.lineNumber(), finding.logLine(), finding.threatType(),
-                    finding.severity(), finding.description()));
+            report.addThreat(new DetectedThreat(
+                    finding.lineNumber(),
+                    finding.logLine(),
+                    finding.threatType(),
+                    finding.severity(),
+                    finding.description(),
+                    finding.recommendedAction()));
         }
         reportRepository.save(report);
         return toResponse(report, lines.size() - uniqueLines.size());
@@ -87,17 +106,51 @@ public class LogProcessingService {
 
     private AnalysisResponse toResponse(AnalysisReport report, long duplicateLines) {
         Map<String, Long> severityCounts = new LinkedHashMap<>();
+        severityCounts.put("CRITICAL", 0L);
+        severityCounts.put("HIGH", 0L);
+        severityCounts.put("MEDIUM", 0L);
+        severityCounts.put("LOW", 0L);
+
         Map<String, Long> typeCounts = new LinkedHashMap<>();
         for (DetectedThreat threat : report.getThreats()) {
             severityCounts.merge(threat.getSeverity(), 1L, Long::sum);
             typeCounts.merge(threat.getThreatType(), 1L, Long::sum);
         }
+
         List<ThreatDto> threats = report.getThreats().stream()
-                .map(t -> new ThreatDto(t.getLineNumber(), t.getLogLine(), t.getThreatType(), t.getSeverity(), t.getDescription()))
+                .map(t -> new ThreatDto(
+                        t.getLineNumber(),
+                        t.getLogLine(),
+                        t.getThreatType(),
+                        t.getSeverity(),
+                        t.getDescription(),
+                        t.getRecommendedAction()))
                 .toList();
+
         long suspicious = report.getLogEntries().stream().filter(LogEntry::isSuspicious).count();
-        return new AnalysisResponse(report.getId(), report.getFileName(), report.getTotalLines(),
-                report.getThreats().size(), report.getProcessingTimeMs(), report.getAnalyzedAt(),
-                severityCounts, typeCounts, suspicious, duplicateLines, threats);
+        long criticalCount = severityCounts.getOrDefault("CRITICAL", 0L);
+        long highCount = severityCounts.getOrDefault("HIGH", 0L);
+        long mediumCount = severityCounts.getOrDefault("MEDIUM", 0L);
+        long safeLines = Math.max(0, report.getTotalLines() - suspicious);
+        String securityStatus = AnalysisResponse.calculateSecurityStatus(
+                criticalCount, highCount, mediumCount, report.getThreats().size());
+
+        return new AnalysisResponse(
+                report.getId(),
+                report.getFileName(),
+                report.getTotalLines(),
+                report.getThreats().size(),
+                criticalCount,
+                highCount,
+                mediumCount,
+                safeLines,
+                securityStatus,
+                report.getProcessingTimeMs(),
+                report.getAnalyzedAt(),
+                severityCounts,
+                typeCounts,
+                suspicious,
+                duplicateLines,
+                threats);
     }
 }

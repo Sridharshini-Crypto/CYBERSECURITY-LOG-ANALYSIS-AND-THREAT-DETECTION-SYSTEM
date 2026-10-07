@@ -14,8 +14,15 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service that orchestrates threat detection across log records.
+ * Demonstrates:
+ * - OOP Interface Implementation (implements ThreatDetectionEngine)
+ * - Polymorphism (delegates evaluation to abstract LogAnalyzer)
+ * - Concurrent collections and asynchronous execution
+ */
 @Service
-public class ThreatDetectionService {
+public class ThreatDetectionService implements ThreatDetectionEngine {
     private static final Pattern FAILED_LOGIN = Pattern.compile("failed\\s+(login|log-in)|authentication\\s+failed|invalid\\s+password", Pattern.CASE_INSENSITIVE);
     private static final Pattern IP_ADDRESS = Pattern.compile("(?<![\\d.])(?:\\d{1,3}\\.){3}\\d{1,3}(?![\\d.])");
     private static final Pattern USER = Pattern.compile("(?:user(?:name)?|account)\\s*[=:]\\s*([\\w.@-]+)", Pattern.CASE_INSENSITIVE);
@@ -32,6 +39,7 @@ public class ThreatDetectionService {
         this.bruteForceThreshold = Math.max(2, bruteForceThreshold);
     }
 
+    @Override
     public List<ThreatResult> analyze(List<String> lines) {
         if (lines.isEmpty()) {
             return List.of();

